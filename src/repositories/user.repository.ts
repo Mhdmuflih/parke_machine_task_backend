@@ -29,6 +29,17 @@ class UserRepository extends BaseRepository<IUser> implements IUserRepository {
             throw new Error("Unknown error in create user");
         }
     }
+
+    async findById(userId: string): Promise<IUser | null> {
+        try {
+            return this.findOne({ _id: userId });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(`Error in findById: ${error.message}`);
+            }
+            throw new Error("Unkown error in findById.");
+        }
+    }
 }
 
 export default new UserRepository();

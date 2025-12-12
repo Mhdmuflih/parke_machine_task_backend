@@ -1,8 +1,9 @@
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../configs/jwt";
 import { MESSAGES } from "../constants/messages";
 import { IUser } from "../interfaces/modelsInterfaces/models";
 import { IUserRepository } from "../interfaces/repositoriesInterfaces/IUserRepository";
 import { IAuthService } from "../interfaces/servicesInterfaces/IAuthService";
-import { passwordHashing } from "../utilities/bcrypt";
+import { passwordCompaire, passwordHashing } from "../utilities/bcrypt";
 
 export class AuthService implements IAuthService {
     constructor(private userRepository: IUserRepository) { }
@@ -29,6 +30,54 @@ export class AuthService implements IAuthService {
                 console.log("Failed to registration service.", error.message);
                 throw new Error(`Error creating user servcie ${error.message}`);
             }
+        }
+    }
+
+    async login(loginData: any): Promise<{ accessToken: string, refreshToken: string, userData: IUser }> {
+        try {
+            const userData: IUser | null = await this.userRepository.findByEmail(loginData.email);
+            if (!userData) {
+                throw new Error(MESSAGES.USER_NOT_FOUND);
+            }
+
+            if (userData.isLocked) {
+                throw new Error(MESSAGES.USER_BLOCKED);
+            }
+
+            const compairePassword: boolean | undefined = await passwordCompaire(loginData.password, userData.password);
+            if (!compairePassword) {
+                throw new Error(MESSAGES.PASSWORD_IS_INCORRECT);
+            }
+
+            const accessToken: string = generateAccessToken(userData._id.toString() as string);
+            const refreshToken: string = generateRefreshToken(userData._id.toString() as string);
+            return { accessToken, refreshToken, userData };
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.log("Failed to login service.", error.message);
+                throw new Error(`Error login user service ${error.message}`);
+            }
+            throw new Error("An unknown error occurred during login.");
+        }
+    }
+
+    async validateRefreshToken(checkRefreshToken: string): Promise<{ accessToken: string; refreshToken: string; userData: IUser; }> {
+        try {
+            const decode = verifyRefreshToken(checkRefreshToken);
+
+            const userData = await this.userRepository.findById(decode.userId);
+            if (!userData) {
+                throw new Error(MESSAGES.USER_NOT_FOUND);
+            }
+
+            const accessToken: string = generateAccessToken(userData._id.toString() as string);
+            const refreshToken: string = generateRefreshToken(userData._id.toString() as string);
+            return { accessToken, refreshToken, userData };
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(`Error refresh token valid service ${error.message}`);
+            }
+            throw new Error("An unknown error occurred during refresh token valid.");
         }
     }
 }

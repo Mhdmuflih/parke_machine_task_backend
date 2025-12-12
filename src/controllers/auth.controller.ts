@@ -27,4 +27,42 @@ export class AuthController implements IAuthController {
         }
     }
 
+    async login(req: Request, res: Response): Promise<void> {
+        try {
+            const { email, password } = req.body;
+            console.log(email, password)
+            if (!email || !password) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: MESSAGES.ALL_FIELD_REQUIRED });
+                return;
+            }
+            const { accessToken, refreshToken, userData } = await this.authService.login(req.body);
+            res.status(HTTP_STATUS.SUCCESS).json({ success: true, message: MESSAGES.LOGIN_SUCCESSFULL, accessToken, refreshToken, userData })
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.log("Failed to login controller.", error.message);
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: error.message });
+            }
+            console.log("Unknown error during login.");
+            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "An Unknown error occured while login" });
+        }
+    }
+
+    async validateRefreshToken(req: Request, res: Response): Promise<void> {
+        try {
+            const { checkRefreshToken } = req.body;
+            if(!checkRefreshToken) {
+                res.status(HTTP_STATUS.BAD_REQUEST).json({success: false, message: MESSAGES.TOKEN_NOT_FOUND});
+                return;
+            }
+            const {accessToken, refreshToken, userData} = await this.authService.validateRefreshToken(checkRefreshToken);
+            res.status(HTTP_STATUS.SUCCESS).json({success: true, message: "new access token and refresh token created.", accessToken, refreshToken, userData});
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.log("Failed to refresh token validation controller.");
+                res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: error.message });
+            }
+            console.log("Unknown error during refresh token validation.");
+            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "An Unknown error occured while refresh token validation." });
+        }
+    }
 }
