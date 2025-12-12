@@ -5,6 +5,5 @@ export interface IUser extends Document {
     email: string;
     password: string;
     isLocked?: boolean;
-    failedToAttempts?: number;
     createdAt?: Date;
 }

@@ -13,11 +13,18 @@ connectionDB();
 
 const app: Application = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cors());
 app.use(morgan("tiny"));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use((req, res, next) => {
+//     console.log("GLOBAL REQUEST CAME:", req.method, req.url);
+//     console.log("BODY IN GLOBAL:", req.body);
+//     next();
+// });
+
 
 app.use("/api", Health_Routes);
 app.use("/api/auth", Auth_Routes);

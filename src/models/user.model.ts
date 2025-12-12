@@ -18,10 +18,6 @@ const userSchema: Schema = new Schema<IUser>({
         type: Boolean,
         default: false
     },
-    failedToAttempts: {
-        type: Number,
-        default: 0
-    },
     createdAt: {
         type: Date,
         default: Date.now
